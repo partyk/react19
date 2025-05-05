@@ -10,7 +10,6 @@ export function App() {
 }
 // Funkce App je React komponenta, která nepoužívá JSX, ale místo toho přímo volá funkci createElement z knihovny React. Tato funkce vytváří element typu h1 s atributem className nastaveným na hodnotu 'greeting' a s textovým obsahem 'Hello'. Výsledkem je HTML element <h1 class="greeting">Hello</h1>.
 
-
 // 2) arrow function + implicit return
 // export const App = () => createElement('h1', { className: 'greeting' }, 'Hello');
 // Tato verze funkce App je React komponenta definovaná jako šipková funkce s implicitním návratem. Stejně jako předchozí příklad nepoužívá JSX, ale přímo volá funkci createElement z knihovny React. Vytváří element typu h1 s atributem className nastaveným na 'greeting' a textovým obsahem 'Hello'. Výsledkem je HTML element <h1 class="greeting">Hello</h1>.
