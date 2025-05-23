@@ -1,4 +1,4 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, useActionState } from 'react';
 
 interface IPost {
   id: number;
@@ -14,10 +14,17 @@ interface IPost {
 const truncate = (text: string, length: number = 20): string =>
   text.length > length ? `${text.substring(0, length)}...` : text;
 
-const DEFAULT_ERRORS = { name: '', text: '' };
+const DEFAULT_FORM_STATE = {
+  name: '',
+  text: '',
+  errors: {
+    name: '',
+    text: '',
+  },
+};
 
 const validateForm = (name: string, text: string) => {
-  const errors = { ...DEFAULT_ERRORS };
+  const errors = { ...DEFAULT_FORM_STATE.errors };
   if (!name) errors.name = 'Name is required';
   if (!text) errors.text = 'Text is required';
   return errors;
@@ -25,23 +32,31 @@ const validateForm = (name: string, text: string) => {
 
 export const Posts = () => {
   const [post, setPost] = useState<IPost[]>([]);
-  const [errors, setErrors] = useState({ ...DEFAULT_ERRORS });
-  const inputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [state, submitAction] = useActionState<
+    {
+      name: string;
+      text: string;
+      errors: { name: string; text: string };
+    },
+    FormData
+  >(
+    (_, payload) => {
+      const text = payload.get('text') as string;
+      const name = payload.get('name') as string;
 
+      const errors = validateForm(name, text);
+
+      if (errors.name || errors.text) {
+        return { text, name, errors };
+      }
+      setPost(currentPosts => [{ id: currentPosts.length + 1, name, text, publishedAt: new Date() }, ...currentPosts]);
+      return { ...DEFAULT_FORM_STATE };
+    },
+    { ...DEFAULT_FORM_STATE },
+  );
   const formatDate = (date: Date) => `${date.toLocaleDateString()}-${date.toLocaleTimeString()}`;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const name = inputRef.current?.value || '';
-    const text = textareaRef.current?.value || '';
-    const errors = validateForm(name, text);
-    setErrors(errors);
-    if (errors.name || errors.text) return;
-    setPost(currentPosts => [{ id: post.length + 1, name, text, publishedAt: new Date() }, ...currentPosts]);
-    inputRef.current!.value = '';
-    textareaRef.current!.value = '';
-  };
+  const { name: nameValue, text: textValue, errors } = state;
 
   return (
     <>
@@ -60,7 +75,7 @@ export const Posts = () => {
         </ul>
       </nav>
       <section className="py-3 container mx-auto px-4 flex flex-col space-y-4 text-left">
-        <form onSubmit={handleSubmit}>
+        <form action={submitAction}>
           <div>
             <div className="mt-2">
               <label htmlFor="name" className="block mb-2 text-sm font-medium">
@@ -71,7 +86,7 @@ export const Posts = () => {
                   name="name"
                   id="name"
                   placeholder="Your name"
-                  ref={inputRef}
+                  defaultValue={nameValue}
                 />
               </label>
               <div className="text-red-500">{errors.name}</div>
@@ -85,7 +100,7 @@ export const Posts = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Some post"
                   rows={4}
-                  ref={textareaRef}
+                  defaultValue={textValue}
                 />
               </label>
               <div className="text-red-500">{errors.text}</div>
